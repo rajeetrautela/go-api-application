@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  app:
+    build: .
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      - DB_HOST=db
+      - DB_PORT=5432
+      - DB_USER=go_test_db
+      - DB_PASSWORD=go_test_db
+      - DB_NAME=go_test_db
+
+  db:
+    image: postgres:14
+    restart: always
+    environment:
+      POSTGRES_USER: go_test_db
+      POSTGRES_PASSWORD: go_test_db
+      POSTGRES_DB: go_test_db
+    ports:
+      - "5432:5432"

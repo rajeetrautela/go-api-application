@@ -1,0 +1,21 @@
+fetch items-
+
+ curl -X GET http://localhost:8001/items \ 
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzQ5NzA1MTYxfQ.PjWspCFIFS3fKpdnZByg2aIuGJEtrBVWBQbeEX02H-c" \
+  -H "refresh_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IiIsImV4cCI6MTc0OTc5MDY2MX0.w0P3j4MHVPub0rmDprMWZ3fpGLr7i9_jKpK3rKa1XYY"
+
+login as admin-
+    curl -X POST http://localhost:8001/login \
+        -H "Content-Type: application/json" \                 
+        -d '{"Username": "admin", "Password": "admin123"}'
+
+curl -X POST http://localhost:8001/login -H "Content-Type: application/json" -d '{"Username": "admin", "Password": "admin123"}'
+curl -X GET http://localhost:8001/items -H "Content-Type: application/json" -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzQ5NzExMTc4fQ.-r2xOeY-zZ0o1pnJIoYS5qrvuSXRp-cNFgT398lB2TM"
+curl -X POST http://localhost:8001/refresh -H "Content-Type: application/json" -d '{"refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IiIsImV4cCI6MTc1MDEzNTc4N30.Zx40sm_AToPLQfN9NyeuoAF747kyU35GmPkfrpNJ1j4"}'
+
+
+update item!!!
+
+create item 
+ curl -X POST http://localhost:8001/items -H "Content-Type: application/json" -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzUwMDUwNTQyfQ.fHflQmOruvA9E0pzysem9RzOYVcLfyS6CHrPdG00zow" -d '{"Name": "test_item", "Price": 221}'
