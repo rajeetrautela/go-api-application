@@ -2,7 +2,7 @@ syntax = "proto3";
 
 package fileupload;
 
-option go_package = "go-jwt-api/internal/fileupload";
+option go_package = "go-api/internal/fileupload";
 
 service FileUploadService {
   rpc UploadFile(FileRequest) returns (FileResponse);

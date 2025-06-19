@@ -21,9 +21,8 @@ import (
 	"go-jwt-api/worker"
 
 	"github.com/gorilla/mux"
-	// "google.golang.org/grpc"
-	// pb "go-jwt-api/internal/fileupload"
-	// "google.golang.org/grpc"
+
+	"go-jwt-api/scheduler"
 )
 
 var items = []model.Item{
@@ -209,16 +208,12 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	os.MkdirAll("uploads", os.ModePerm)
-
-	// Parse multipart form with a max memory of 10MB
-	err := r.ParseMultipartForm(10 << 20) // 10MB
+	err := r.ParseMultipartForm(10 << 20)
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
 	}
 
-	// Retrieve the file from form data
 	file, handler, err := r.FormFile("uploadFile")
 	if err != nil {
 		http.Error(w, "Error retrieving the file", http.StatusBadRequest)
@@ -226,23 +221,24 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Create destination file
-	dstPath := filepath.Join("uploads", handler.Filename)
-	dst, err := os.Create(dstPath)
+	// Save to temp file
+	tempPath := filepath.Join(os.TempDir(), handler.Filename)
+	tempFile, err := os.Create(tempPath)
 	if err != nil {
-		http.Error(w, "Error saving the file", http.StatusInternalServerError)
+		http.Error(w, "Error creating temp file", http.StatusInternalServerError)
 		return
 	}
-	defer dst.Close()
+	defer tempFile.Close()
+	io.Copy(tempFile, file)
 
-	// Copy uploaded file to destination
-	_, err = io.Copy(dst, file)
+	// Call gRPC client
+	message, err := UploadFileToGRPCServer(tempPath)
 	if err != nil {
-		http.Error(w, "Error writing the file", http.StatusInternalServerError)
+		http.Error(w, "gRPC upload failed: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	fmt.Fprintf(w, "File uploaded successfully: %s\n", handler.Filename)
+	fmt.Fprintf(w, "gRPC File upload successful: %s\n", message)
 }
 
 // func register(w http.ResponseWriter, r *http.Request) {
@@ -255,6 +251,9 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 // }
 
 func startHTTPServer() {
+
+	go scheduler.StartCronJobs()
+
 	config.ConnectDatabase()
 
 	// Test the connection
@@ -285,18 +284,6 @@ func startHTTPServer() {
 
 	log.Println("Http Server started at :8001")
 	log.Fatal(http.ListenAndServe(":8001", router))
-}
-
-func startGRPCServer() {
-	// lis, err := net.Listen("tcp", ":50051")
-	// if err != nil {
-	// 	panic(err)
-	// }
-
-	// grpcSrv := grpc.NewServer()
-	// pb.RegisterFileUploadServiceServer(grpcSrv, &grpcServer{})
-	// fmt.Println("gRPC server listening on :50051")
-	// grpcSrv.Serve(lis)
 }
 
 func main() {
