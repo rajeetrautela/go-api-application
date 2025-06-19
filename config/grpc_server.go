@@ -1,4 +1,4 @@
-package main
+package config
 
 import (
 	"context"
@@ -26,7 +26,7 @@ func (s *server) UploadFile(ctx context.Context, req *pb.FileRequest) (*pb.FileR
 	return &pb.FileResponse{Message: "File uploaded successfully"}, nil
 }
 
-func startGRPCServer() {
+func StartGRPCServer() {
 	lis, err := net.Listen("tcp", ":50051")
 	if err != nil {
 		panic(err)

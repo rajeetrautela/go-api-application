@@ -8,9 +8,10 @@ import (
 )
 
 func Seed() {
+	// seeding Users
 	users := []model.User{
-		{Username: "admin", Password: "admin123", Role: "admin"},
-		{Username: "user1", Password: "user123", Role: "user"},
+		{Username: "testadminuser", Password: "admin123", Role: "admin"},
+		{Username: "testuser", Password: "user123", Role: "user"},
 	}
 
 	for _, user := range users {
@@ -27,4 +28,22 @@ func Seed() {
 			log.Printf("Seeded user %s", user.Username)
 		}
 	}
+
+	// Seeding Items
+
+	items := []model.Item{
+		{Name: "Laptop", Price: 75000},
+		{Name: "Smartphone", Price: 30000},
+		{Name: "Headphones", Price: 5000},
+		{Name: "Monitor", Price: 15000},
+	}
+
+	for _, item := range items {
+		if err := config.DB.Create(&item).Error; err != nil {
+			log.Printf("Failed to seed item %s: %v", item.Name, err)
+		} else {
+			log.Printf("Seeded item %s", item.Name)
+		}
+	}
+
 }

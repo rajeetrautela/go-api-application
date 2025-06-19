@@ -57,12 +57,11 @@ GET / – Upload form
 POST /upload – Upload file and send to gRPC server
 
 🛠️ Setup & Run
-1. Clone the Repository
+    git clone https://github.com/rajeetrautela/go-api-application.git
+    cd go-jwt-api
 
-2. Configure Environment
-Update your database and gRPC settings in config/ and .env if applicable.
-
-3. Run the Server
+  Run the Server
+    go run *.go 
 
 Server will start at http://localhost:8001
 
