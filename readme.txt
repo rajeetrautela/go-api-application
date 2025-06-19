@@ -59,6 +59,9 @@
 🛠️ Setup & Run
     git clone https://github.com/rajeetrautela/go-api-application.git
     cd go-jwt-api
+    go mod init go-api-application
+    go mod tidy
+
 
 Run the Server
     go run *.go 

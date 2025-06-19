@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"io"
 	"log"
-	"math/rand"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -15,38 +14,41 @@ import (
 	"go-jwt-api/auth"
 	"go-jwt-api/middleware"
 	"go-jwt-api/model"
+	"go-jwt-api/repository"
 
 	"go-jwt-api/config"
+	"go-jwt-api/db"
 	"go-jwt-api/migrations"
+	"go-jwt-api/scheduler"
+	"go-jwt-api/tokenstore"
 	"go-jwt-api/worker"
 
 	"github.com/gorilla/mux"
-
-	"go-jwt-api/scheduler"
 )
 
-var items = []model.Item{
-	{ID: "0", Name: "Sample Item12121", Price: 100},
-}
-
-var users = []model.User{
-	{Username: "admin", Password: "admin123", Role: "admin"},
-	{Username: "user", Password: "user123", Role: "user"},
-}
-
 func getItems(w http.ResponseWriter, r *http.Request) {
+	var items []model.Item
+	if err := config.DB.Find(&items).Error; err != nil {
+		http.Error(w, "Failed to fetch items", http.StatusInternalServerError)
+		return
+	}
 	json.NewEncoder(w).Encode(items)
 }
 
 func getItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	for _, item := range items {
-		if item.ID == params["id"] {
-			json.NewEncoder(w).Encode(item)
-			return
-		}
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
 	}
-	http.NotFound(w, r)
+
+	item, err := repository.GetItemByID(uint(id))
+	if err != nil {
+		http.Error(w, "Item not found", http.StatusNotFound)
+		return
+	}
+	json.NewEncoder(w).Encode(item)
 }
 
 func createItem(w http.ResponseWriter, r *http.Request) {
@@ -55,38 +57,49 @@ func createItem(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
-	item.ID = strconv.Itoa(rand.Intn(1000000))
-	items = append(items, item)
+
+	if err := repository.CreateItem(&item); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
 	json.NewEncoder(w).Encode(item)
 }
 
 func updateItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	for index, _ := range items {
-		items = append(items[:index], items[index+1:]...)
-		var newItem model.Item
-		if err := json.NewDecoder(r.Body).Decode(&newItem); err != nil {
-			http.Error(w, err.Error(), http.StatusBadRequest)
-			return
-		}
-		newItem.ID = params["id"]
-		items = append(items, newItem)
-		json.NewEncoder(w).Encode(newItem)
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
 		return
 	}
-	http.NotFound(w, r)
+
+	var updated model.Item
+	if err := json.NewDecoder(r.Body).Decode(&updated); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+	updated.ID = uint(id)
+
+	if err := repository.UpdateItem(&updated); err != nil {
+		http.Error(w, "Failed to update item", http.StatusInternalServerError)
+		return
+	}
+	json.NewEncoder(w).Encode(updated)
 }
 
 func deleteItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
-	for index, item := range items {
-		if item.ID == params["id"] {
-			items = append(items[:index], items[index+1:]...)
-			w.WriteHeader(http.StatusNoContent)
-			return
-		}
+	id, err := strconv.Atoi(params["id"])
+	if err != nil {
+		http.Error(w, "Invalid ID", http.StatusBadRequest)
+		return
 	}
-	http.NotFound(w, r)
+
+	if err := repository.DeleteItem(uint(id)); err != nil {
+		http.Error(w, "Failed to delete item", http.StatusInternalServerError)
+		return
+	}
+	w.WriteHeader(http.StatusNoContent)
 }
 
 // it log's in user and provide a valid JWT in return
@@ -96,19 +109,41 @@ func login(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	for _, u := range users {
-		if u.Username == creds.Username && u.Password == creds.Password {
-			token, _ := auth.GenerateJWT(u.Username, u.Role)
-			refreshToken, _ := auth.GenerateRefreshToken(u.Username)
-			auth.StoreRefreshToken(refreshToken, u.Username)
-			json.NewEncoder(w).Encode(map[string]string{
-				"access_token":  token,
-				"refresh_token": refreshToken,
-			})
-			return
-		}
+
+	var user model.User
+	if err := config.DB.Where("username = ?", creds.Username).First(&user).Error; err != nil {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
 	}
-	http.Error(w, "Unauthorized", http.StatusUnauthorized)
+
+	if !auth.CheckPasswordHash(creds.Password, user.Password) {
+		http.Error(w, "Unauthorized", http.StatusUnauthorized)
+		return
+	}
+
+	token, _ := auth.GenerateJWT(user.Username, user.Role)
+	refreshToken, _ := auth.GenerateRefreshToken(user.Username)
+	tokenstore.Store(refreshToken, user.Username)
+
+	json.NewEncoder(w).Encode(map[string]string{
+		"access_token":  token,
+		"refresh_token": refreshToken,
+	})
+}
+
+func register(w http.ResponseWriter, r *http.Request) {
+	var user model.User
+	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
+		http.Error(w, "Bad request", http.StatusBadRequest)
+		return
+	}
+
+	if err := repository.CreateUser(&user); err != nil {
+		http.Error(w, err.Error(), http.StatusBadRequest)
+		return
+	}
+
+	json.NewEncoder(w).Encode(user)
 }
 
 func refresh(w http.ResponseWriter, r *http.Request) {
@@ -119,11 +154,13 @@ func refresh(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	username, err := auth.ValidateRefreshToken(req.RefreshToken)
+
+	username, err := tokenstore.Validate(req.RefreshToken)
 	if err != nil {
 		http.Error(w, "Invalid refresh token", http.StatusUnauthorized)
 		return
 	}
+
 	token, _ := auth.GenerateJWT(username, "user")
 	json.NewEncoder(w).Encode(map[string]string{"access_token": token})
 }
@@ -136,7 +173,7 @@ func logout(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Bad request", http.StatusBadRequest)
 		return
 	}
-	auth.DeleteRefreshToken(req.RefreshToken)
+	tokenstore.Delete(req.RefreshToken)
 	w.WriteHeader(http.StatusOK)
 }
 
@@ -258,6 +295,11 @@ func startHTTPServer() {
 		log.Println("✅ Successfully connected to the database!")
 		migrations.Migrate()
 		fmt.Println("📦 Database migrated successfully too Hurray!")
+		fmt.Println("📦 Now Seeding!!!!")
+
+		// Make sure if its not required you can just comment it here
+		// as seed requires just one time to create some dummy data to proceed with
+		db.Seed()
 	} else {
 		log.Fatal("❌ Failed to connect to the database.")
 	}
@@ -274,6 +316,9 @@ func startHTTPServer() {
 	router.HandleFunc("/items", middleware.JWTMiddleware(getItems, "admin")).Methods("GET")
 	router.HandleFunc("/items/{id}", middleware.JWTMiddleware(getItem, "admin", "user")).Methods("GET")
 	router.HandleFunc("/items", middleware.JWTMiddleware(createItem, "admin")).Methods("POST")
+
+	router.HandleFunc("/register", register).Methods("POST")
+
 	router.HandleFunc("/items/{id}", middleware.JWTMiddleware(updateItem, "admin")).Methods("PUT")
 	router.HandleFunc("/items/{id}", middleware.JWTMiddleware(deleteItem, "admin")).Methods("DELETE")
 	router.HandleFunc("/startworker", middleware.JWTMiddleware(triggerWorker, "admin", "user")).Methods("POST")

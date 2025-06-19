@@ -1,7 +1,6 @@
 package auth
 
 import (
-	"fmt"
 	"time"
 
 	"github.com/golang-jwt/jwt/v5"
@@ -43,11 +42,6 @@ func GenerateRefreshToken(username string) (string, error) {
 	return token.SignedString(jwtKey)
 }
 
-func StoreRefreshToken(token, username string) {
-	// here its generating that key pair and storing it to above var
-	refreshTokens[token] = username
-}
-
 func ValidateJWT(tokenStr string) (*Claims, error) {
 	claims := &Claims{}
 	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
@@ -57,23 +51,4 @@ func ValidateJWT(tokenStr string) (*Claims, error) {
 		return nil, err
 	}
 	return claims, nil
-}
-
-func ValidateRefreshToken(tokenStr string) (string, error) {
-	claims := &Claims{}
-	token, err := jwt.ParseWithClaims(tokenStr, claims, func(token *jwt.Token) (interface{}, error) {
-		return jwtKey, nil
-	})
-	if err != nil || !token.Valid {
-		return "", err
-	}
-	username := claims.Username
-	if storedUser, ok := refreshTokens[tokenStr]; ok && storedUser == username {
-		return username, nil
-	}
-	return "", fmt.Errorf("invalid refresh token")
-}
-
-func DeleteRefreshToken(token string) {
-	delete(refreshTokens, token)
 }
