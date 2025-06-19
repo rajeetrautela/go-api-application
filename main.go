@@ -251,11 +251,8 @@ func uploadHandler(w http.ResponseWriter, r *http.Request) {
 // }
 
 func startHTTPServer() {
-
 	go scheduler.StartCronJobs()
-
 	config.ConnectDatabase()
-
 	// Test the connection
 	if config.DB != nil {
 		log.Println("✅ Successfully connected to the database!")
