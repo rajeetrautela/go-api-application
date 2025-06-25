@@ -3,6 +3,8 @@ package scheduler
 import (
 	"errors"
 	"log"
+	"net/smtp"
+	"os"
 	"time"
 
 	"github.com/robfig/cron/v3"
@@ -48,6 +50,33 @@ func cleanupOldFiles() error {
 }
 
 func sendWeeklyEmail() error {
-	sleep(2 * time.Second)
+	// Skip actual email sending if environment is "TEST"
+	if os.Getenv("ENV") == "TEST" {
+		log.Println("Skipping real email sending in TEST environment")
+		sleep(1 * time.Second) // simulate delay
+		return nil
+	}
+
+	// SMTP server configuration.
+	smtpHost := "smtp.example.com"
+	smtpPort := "587"
+	smtpUser := "your_email@example.com"
+	smtpPass := "your_password"
+
+	from := smtpUser
+	to := []string{"recipient@example.com"}
+
+	subject := "Subject: Weekly Report\n"
+	body := "This is the weekly report email sent by your scheduler.\n"
+
+	msg := []byte(subject + "\n" + body)
+
+	auth := smtp.PlainAuth("", smtpUser, smtpPass, smtpHost)
+
+	err := smtp.SendMail(smtpHost+":"+smtpPort, auth, from, to, msg)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }

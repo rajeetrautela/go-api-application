@@ -60,7 +60,6 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	// Save the file to the uploads directory
 	uploadPath := filepath.Join(uploadDir, handler.Filename)
 	destFile, err := os.Create(uploadPath)
-	fmt.Println(uploadPath, "-=-=-=", uploadDir, "-=-=-=-=")
 	if err != nil {
 		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
 		return
