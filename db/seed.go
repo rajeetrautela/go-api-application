@@ -29,8 +29,6 @@ func Seed() {
 		}
 	}
 
-	// Seeding Items
-
 	items := []model.Item{
 		{Name: "Laptop", Price: 75000},
 		{Name: "Smartphone", Price: 30000},

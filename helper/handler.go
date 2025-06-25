@@ -9,6 +9,8 @@ import (
 	"path/filepath"
 )
 
+var UploadFileToGRPCServer = config.UploadFileToGRPCServer
+
 func FormHandler(w http.ResponseWriter, r *http.Request) {
 	html := `
  <!DOCTYPE html>
@@ -33,7 +35,7 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := r.ParseMultipartForm(10 << 20)
+	err := r.ParseMultipartForm(10 << 20) // 10 MB
 	if err != nil {
 		http.Error(w, "Error parsing form", http.StatusBadRequest)
 		return
@@ -46,18 +48,33 @@ func UploadHandler(w http.ResponseWriter, r *http.Request) {
 	}
 	defer file.Close()
 
-	// Save to temp file
-	tempPath := filepath.Join(os.TempDir(), handler.Filename)
-	tempFile, err := os.Create(tempPath)
+	uploadDir := "./uploads" // relative path
+
+	if _, err := os.Stat(uploadDir); os.IsNotExist(err) {
+		err = os.MkdirAll(uploadDir, os.ModePerm)
+		if err != nil {
+			http.Error(w, "Failed to create upload directory: "+err.Error(), http.StatusInternalServerError)
+			return
+		}
+	}
+	// Save the file to the uploads directory
+	uploadPath := filepath.Join(uploadDir, handler.Filename)
+	destFile, err := os.Create(uploadPath)
+	fmt.Println(uploadPath, "-=-=-=", uploadDir, "-=-=-=-=")
 	if err != nil {
-		http.Error(w, "Error creating temp file", http.StatusInternalServerError)
+		http.Error(w, "Failed to save file: "+err.Error(), http.StatusInternalServerError)
 		return
 	}
-	defer tempFile.Close()
-	io.Copy(tempFile, file)
+	defer destFile.Close()
 
-	// Call gRPC client
-	message, err := config.UploadFileToGRPCServer(tempPath)
+	_, err = io.Copy(destFile, file)
+	if err != nil {
+		http.Error(w, "Failed to write file", http.StatusInternalServerError)
+		return
+	}
+
+	// Call gRPC client with the new path
+	message, err := UploadFileToGRPCServer(uploadPath)
 	if err != nil {
 		http.Error(w, "gRPC upload failed: "+err.Error(), http.StatusInternalServerError)
 		return

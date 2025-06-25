@@ -11,7 +11,7 @@ import (
 )
 
 // it log's in user and provide a valid JWT in return
-func login(w http.ResponseWriter, r *http.Request) {
+func Login(w http.ResponseWriter, r *http.Request) {
 	var creds model.User
 	if err := json.NewDecoder(r.Body).Decode(&creds); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -39,7 +39,7 @@ func login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-func register(w http.ResponseWriter, r *http.Request) {
+func Register(w http.ResponseWriter, r *http.Request) {
 	var user model.User
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		http.Error(w, "Bad request", http.StatusBadRequest)
@@ -54,7 +54,7 @@ func register(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(user)
 }
 
-func refresh(w http.ResponseWriter, r *http.Request) {
+func Refresh(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
 	}
@@ -73,7 +73,7 @@ func refresh(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(map[string]string{"access_token": token})
 }
 
-func logout(w http.ResponseWriter, r *http.Request) {
+func Logout(w http.ResponseWriter, r *http.Request) {
 	var req struct {
 		RefreshToken string `json:"refresh_token"`
 	}

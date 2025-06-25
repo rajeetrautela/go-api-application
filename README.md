@@ -59,6 +59,9 @@ POST /upload – Upload file and send to gRPC server
 🛠️ Setup & Run
     git clone https://github.com/rajeetrautela/go-api-application.git
     cd go-jwt-api
+    go mod init go-api-application
+    go mod tidy
+
 
   Run the Server
     go run *.go 
@@ -66,6 +69,12 @@ POST /upload – Upload file and send to gRPC server
 Server will start at http://localhost:8001
 
 🧪 Sample Users
+
+[
+  { "username": "admin", "password": "admin123", "role": "admin" },
+  { "username": "user", "password": "user123", "role": "user" }
+]
+
 
 📌 Notes
 Ensure your PostgreSQL database is running and accessible.

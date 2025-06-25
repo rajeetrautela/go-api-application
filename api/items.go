@@ -11,7 +11,7 @@ import (
 	"github.com/gorilla/mux"
 )
 
-func getItems(w http.ResponseWriter, r *http.Request) {
+func GetItems(w http.ResponseWriter, r *http.Request) {
 	var items []model.Item
 	if err := config.DB.Find(&items).Error; err != nil {
 		http.Error(w, "Failed to fetch items", http.StatusInternalServerError)
@@ -20,7 +20,7 @@ func getItems(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(items)
 }
 
-func getItem(w http.ResponseWriter, r *http.Request) {
+func GetItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -36,7 +36,7 @@ func getItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(item)
 }
 
-func createItem(w http.ResponseWriter, r *http.Request) {
+func CreateItem(w http.ResponseWriter, r *http.Request) {
 	var item model.Item
 	if err := json.NewDecoder(r.Body).Decode(&item); err != nil {
 		http.Error(w, err.Error(), http.StatusBadRequest)
@@ -50,7 +50,7 @@ func createItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(item)
 }
 
-func updateItem(w http.ResponseWriter, r *http.Request) {
+func UpdateItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
@@ -72,7 +72,7 @@ func updateItem(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(updated)
 }
 
-func deleteItem(w http.ResponseWriter, r *http.Request) {
+func DeleteItem(w http.ResponseWriter, r *http.Request) {
 	params := mux.Vars(r)
 	id, err := strconv.Atoi(params["id"])
 	if err != nil {
