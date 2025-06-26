@@ -62,11 +62,17 @@ POST /upload – Upload file and send to gRPC server
     go mod init go-api-application
     go mod tidy
 
+  To run docker compose
+    docker-compose up --build
+
 
   Run the Server
     go run *.go 
 
-Server will start at http://localhost:8001
+Server will start at http://localhost:8085
+
+To run test with coverage which include *_test.go files
+  go test -cover ./name_of_folder 
 
 🧪 Sample Users
 

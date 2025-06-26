@@ -1,12 +1,16 @@
 some example curls here!!
 
 
-curl -X POST http://localhost:8001/login -H "Content-Type: application/json" -d '{"Username": "admin", "Password": "admin123"}'
+login-
+curl -X POST http://localhost:8001/login -H "Content-Type: application/json" -d '{"Username": "testadminuser", "Password": "admin123"}'
+
+make sure to update auth token which you'll get from the above api(Access Token)
+
+index item
 curl -X GET http://localhost:8001/items -H "Content-Type: application/json" -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzQ5NzExMTc4fQ.-r2xOeY-zZ0o1pnJIoYS5qrvuSXRp-cNFgT398lB2TM"
+
+get new auth token from refresh token
 curl -X POST http://localhost:8001/refresh -H "Content-Type: application/json" -d '{"refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6IiIsImV4cCI6MTc1MDEzNTc4N30.Zx40sm_AToPLQfN9NyeuoAF747kyU35GmPkfrpNJ1j4"}'
-
-
-update item!!!
 
 create item 
  curl -X POST http://localhost:8001/items -H "Content-Type: application/json" -H "Authorization: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VybmFtZSI6ImFkbWluIiwicm9sZSI6ImFkbWluIiwiZXhwIjoxNzUwMDUwNTQyfQ.fHflQmOruvA9E0pzysem9RzOYVcLfyS6CHrPdG00zow" -d '{"Name": "test_item", "Price": 221}'
