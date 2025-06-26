@@ -80,6 +80,7 @@ Server will start at http://localhost:8001
 Ensure your PostgreSQL database is running and accessible.
 gRPC server must be implemented and running for file uploads to work.
 Cron jobs are started automatically in the background.
+Also make sure to update SMTP config to make the emailing funtionality works.
 
 📃 License
 MIT License

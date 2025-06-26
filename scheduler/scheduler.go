@@ -15,7 +15,8 @@ var sleep = time.Sleep // override in tests
 func StartCronJobs() error {
 	c := cron.New()
 
-	_, err := c.AddFunc("0 0 * * *", func() {
+	// update here to configure as per your need
+	_, err := c.AddFunc("@every 1m", func() {
 		log.Println("🧹 Running cleanup job...")
 		if err := cleanupOldFiles(); err != nil {
 			log.Printf(" Cleanup failed: %v\n", err)
@@ -27,7 +28,8 @@ func StartCronJobs() error {
 		return errors.New("failed to schedule cleanup job")
 	}
 
-	_, err = c.AddFunc("0 9 * * MON", func() {
+	// update here to configure as per your need
+	_, err = c.AddFunc("@every 1m", func() {
 		log.Println("📧 Sending weekly report email...")
 		if err := sendWeeklyEmail(); err != nil {
 			log.Printf(" Email sending failed: %v\n", err)
@@ -57,7 +59,8 @@ func sendWeeklyEmail() error {
 		return nil
 	}
 
-	// SMTP server configuration.
+	// SMTP server configuration.xsaxc
+	// for now this will fail due to the SMTP env's
 	smtpHost := "smtp.example.com"
 	smtpPort := "587"
 	smtpUser := "your_email@example.com"
